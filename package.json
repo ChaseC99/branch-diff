@@ -10,6 +10,15 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "diff",
+    "files changed"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chasec99/branch-diff.git"
+  },
+  "activationEvents": ["onStartupFinished"], 
   "main": "./out/extension.js",
   "contributes": {
     "views": {
