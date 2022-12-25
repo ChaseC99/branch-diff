@@ -6,31 +6,24 @@ import { BranchDiffProvider } from './branchDiffProvider';
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "branch-diff" is now active!');
-
-	const rootPath =
-		vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-			? vscode.workspace.workspaceFolders[0].uri.fsPath
-			: undefined;
+	const rootPath = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+		? vscode.workspace.workspaceFolders[0].uri.fsPath
+		: undefined
 	
+	// Create BranchDiffProvider
 	const branchDiffProvider = new BranchDiffProvider(rootPath)
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	vscode.commands.registerCommand('branchDiff.refresh', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		branchDiffProvider.refresh()
-	});
-	
+	// Register it with the window
 	vscode.window.registerTreeDataProvider("branchDiff", branchDiffProvider)
+	// Refresh the extension on document save
 	vscode.workspace.onDidSaveTextDocument(() => {
 		branchDiffProvider.refresh()
 	})
+
+	// The branchDiff.refresh command has been defined in the package.json file
+	// Have it trigger the branchDiffProvider.refresh() function
+	vscode.commands.registerCommand('branchDiff.refresh', () => {
+		branchDiffProvider.refresh()
+	});
 }
 
 // This method is called when your extension is deactivated

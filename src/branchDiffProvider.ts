@@ -100,9 +100,4 @@ class FileItem extends TreeItem {
     public getRelativePath(): string[] {
         return this.relativePath
     }
-
-    // iconPath = {
-    //   light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
-    //   dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
-    // };
 }
