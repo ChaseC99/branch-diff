@@ -1,16 +1,14 @@
 {
   "name": "branch-diff",
-  "displayName": "branch-diff",
+  "displayName": "Branch Diff",
   "description": "Shows the files that have changed between branches",
-  "version": "0.0.1",
+  "publisher": "ChaseCarnaroli",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.74.0"
   },
   "categories": [
     "Other"
-  ],
-  "activationEvents": [
-    "onCommand:branch-diff.helloWorld"
   ],
   "main": "./out/extension.js",
   "contributes": {
