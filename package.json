@@ -27,10 +27,19 @@
 				"command": "branchDiff.refresh",
 				"title": "Refresh",
 				"icon": "$(extensions-refresh)"
-			}
+			},
+      {
+        "command": "branchDiff.setBranch",
+        "title": "Branch"
+      }
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "branchDiff.setBranch",
+          "group": "navigation",
+          "when": "view == branchDiff"
+        },
         {
           "command": "branchDiff.refresh",
           "group": "navigation",

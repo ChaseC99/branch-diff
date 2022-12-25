@@ -19,11 +19,23 @@ export function activate(context: vscode.ExtensionContext) {
 		branchDiffProvider.refresh()
 	})
 
-	// The branchDiff.refresh command has been defined in the package.json file
-	// Have it trigger the branchDiffProvider.refresh() function
+	// Register the commands from package.json
+	// The refresh button
 	vscode.commands.registerCommand('branchDiff.refresh', () => {
 		branchDiffProvider.refresh()
 	});
+	// The change branch button
+	vscode.commands.registerCommand('branchDiff.setBranch', async () => {
+		const branches = await branchDiffProvider.getBranches()
+		const result = await vscode.window.showQuickPick(
+			branches,
+			{placeHolder: "Select a branch", title: "Branch Diff"}
+		)
+		if (result && result.at(0) !== '*') {
+			branchDiffProvider.setBranch(result)
+			
+		}
+	})
 }
 
 // This method is called when your extension is deactivated
