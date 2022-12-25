@@ -21,6 +21,22 @@
           "name": "Branch Diff"
         }
       ]
+    },
+    "commands": [
+			{
+				"command": "branchDiff.refresh",
+				"title": "Refresh",
+				"icon": "$(extensions-refresh)"
+			}
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "branchDiff.refresh",
+          "group": "navigation",
+          "when": "view == branchDiff"
+        }
+      ]
     }
   },
   "scripts": {

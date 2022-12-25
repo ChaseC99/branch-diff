@@ -1,9 +1,12 @@
 import {
+    Event,
+    EventEmitter,
     ProviderResult,
     TreeDataProvider,
     TreeItem,
     TreeItemCollapsibleState,
     Uri,
+    window,
 } from 'vscode';
 
 import * as cp from "child_process";
@@ -19,10 +22,18 @@ const execShell = (cmd: string) =>
     });
 
 export class BranchDiffProvider implements TreeDataProvider<FileItem> {
+    private _onDidChangeTreeData: EventEmitter<FileItem | undefined | void> = new EventEmitter<FileItem | undefined | void>();
+	readonly onDidChangeTreeData: Event<FileItem | undefined | void> = this._onDidChangeTreeData.event;
+
     tree: {[key: string]: any };
     constructor(private workspaceRoot: string | undefined) {
         this.tree = {}
     }
+
+    refresh(): void {
+        window.showInformationMessage('Refreshed list');
+        this._onDidChangeTreeData.fire()
+	}
 
     getTreeItem(element: FileItem): FileItem | Thenable<FileItem> {
         return element;
@@ -42,6 +53,7 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
     }
 
     private async getFiles(): Promise<FileItem[]> {
+        this.tree = {}
         const dir = await execShell("cd " + this.workspaceRoot + "; pwd")
         const files = await execShell("cd " + this.workspaceRoot + "; git diff main --name-only")
         files.split('\n')
