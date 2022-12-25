@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const result = await vscode.window.showQuickPick(
 			quickPickOptions,
-			{placeHolder: "Select a branch", title: "Branch Diff"}
+			{placeHolder: "Select a branch", title: "Change Parent Branch to Compare"}
 		)
 		if (result && result.label.at(0) !== '*') {
 			branchDiffProvider.setBranch(result.label)
