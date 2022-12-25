@@ -19,12 +19,18 @@ export function activate(context: vscode.ExtensionContext) {
 		branchDiffProvider.refresh()
 	})
 
+	// Refresh the parent branch when the git branch changes
+	const gitWatcher = vscode.workspace.createFileSystemWatcher("**/HEAD")
+	gitWatcher.onDidChange(() => {
+		branchDiffProvider.refreshParentBranch()
+	})
+
 	// Register the commands from package.json
 	// The refresh button
 	vscode.commands.registerCommand('branchDiff.refresh', () => {
 		branchDiffProvider.refresh()
 	});
-	// The change branch button
+	// The change parent branch button
 	vscode.commands.registerCommand('branchDiff.setBranch', async () => {
 		const branches = await branchDiffProvider.getBranches()
 		const quickPickOptions = branches.map(branch => {
@@ -33,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 				description = 'current branch'
 			} 
 			if (branch === branchDiffProvider.getBranch()) {
-				description = 'selected branch'
+				description = 'parent branch'
 			}
 			return {"label": branch, "description": description}
 		})

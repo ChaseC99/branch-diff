@@ -25,13 +25,13 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
 	readonly onDidChangeTreeData: Event<FileItem | undefined | void> = this._onDidChangeTreeData.event;
 
     tree: {[key: string]: any };
-    branch: string;
+    parentBranch: string;
     constructor(private workspaceRoot: string | undefined) {
         this.tree = {}
 
-        this.branch = "main"
+        this.parentBranch = "main"
         this.getParentBranch().then(result => {
-            this.branch = result
+            this.parentBranch = result
             this.refresh()
         })
     }
@@ -58,7 +58,7 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
     }
 
     public getBranch(): string {
-        return this.branch
+        return this.parentBranch
     }
 
     public async getBranches(): Promise<string[]> {
@@ -71,13 +71,19 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
     }
 
     public setBranch(branch: string): void {
-        this.branch = branch
+        this.parentBranch = branch
         this.refresh()
+    }
+
+    public refreshParentBranch(): void {
+        this.getParentBranch().then(parent => {
+            this.setBranch(parent)
+        })
     }
 
     private async getFiles(): Promise<FileItem[]> {
         this.tree = {}
-        const files = await execShell(`cd ${this.workspaceRoot}; git diff --name-only ${this.branch}`)
+        const files = await execShell(`cd ${this.workspaceRoot}; git diff --name-only ${this.parentBranch}`)
         files.split('\n')
             .filter(file => file !== '')
             .forEach(file => {
