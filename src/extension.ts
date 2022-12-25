@@ -28,6 +28,9 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	
 	vscode.window.registerTreeDataProvider("branchDiff", branchDiffProvider)
+	vscode.workspace.onDidSaveTextDocument(() => {
+		branchDiffProvider.refresh()
+	})
 }
 
 // This method is called when your extension is deactivated

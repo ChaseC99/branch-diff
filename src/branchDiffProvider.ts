@@ -6,7 +6,6 @@ import {
     TreeItem,
     TreeItemCollapsibleState,
     Uri,
-    window,
 } from 'vscode';
 
 import * as cp from "child_process";
@@ -31,7 +30,6 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
     }
 
     refresh(): void {
-        window.showInformationMessage('Refreshed list');
         this._onDidChangeTreeData.fire()
 	}
 
@@ -54,7 +52,7 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
 
     private async getFiles(): Promise<FileItem[]> {
         this.tree = {}
-        const dir = await execShell("cd " + this.workspaceRoot + "; pwd")
+        await execShell("cd " + this.workspaceRoot + "; pwd")
         const files = await execShell("cd " + this.workspaceRoot + "; git diff main --name-only")
         files.split('\n')
             .filter(file => file !== '')
