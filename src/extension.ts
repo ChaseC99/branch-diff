@@ -27,13 +27,23 @@ export function activate(context: vscode.ExtensionContext) {
 	// The change branch button
 	vscode.commands.registerCommand('branchDiff.setBranch', async () => {
 		const branches = await branchDiffProvider.getBranches()
+		const quickPickOptions = branches.map(branch => {
+			var description;
+			if (branch.at(0) === '*') {
+				description = 'current branch'
+			} 
+			if (branch === branchDiffProvider.getBranch()) {
+				description = 'selected branch'
+			}
+			return {"label": branch, "description": description}
+		})
+
 		const result = await vscode.window.showQuickPick(
-			branches,
+			quickPickOptions,
 			{placeHolder: "Select a branch", title: "Branch Diff"}
 		)
-		if (result && result.at(0) !== '*') {
-			branchDiffProvider.setBranch(result)
-			
+		if (result && result.label.at(0) !== '*') {
+			branchDiffProvider.setBranch(result.label)
 		}
 	})
 }

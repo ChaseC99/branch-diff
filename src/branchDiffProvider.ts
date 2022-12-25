@@ -30,7 +30,10 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
         this.tree = {}
 
         this.branch = "main"
-        this.getParentBranch().then(result => this.branch = result)
+        this.getParentBranch().then(result => {
+            this.branch = result
+            this.refresh()
+        })
     }
 
     refresh(): void {
@@ -54,9 +57,17 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
         }
     }
 
+    public getBranch(): string {
+        return this.branch
+    }
+
     public async getBranches(): Promise<string[]> {
         const branches = await execShell(`cd ${this.workspaceRoot}; git branch`)
-        return branches.split('\n').filter(branches => branches !== '')
+        return branches.split('\n')
+            .filter(branch => branch !== '')
+            .map(branch => {
+                return branch.replace('  ', '').replace('\n','')
+            })
     }
 
     public setBranch(branch: string): void {
@@ -88,7 +99,7 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
             ' git show-branch | sed "s/].*//" | grep "\\*" | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed "s/^.*\\[//"'
         )
 
-        return parentBranch !== "" ? parentBranch : 'master'
+        return parentBranch !== "" ? parentBranch.replace('\n','') : 'master'
     }
 
     private createChildren(treePosition: any, relativePath: string[]): FileItem[] {
