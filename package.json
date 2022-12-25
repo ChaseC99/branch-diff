@@ -18,6 +18,7 @@
     "type": "git",
     "url": "https://github.com/chasec99/branch-diff.git"
   },
+  "license": "SEE LICENSE IN LICENSE.md",
   "activationEvents": ["onStartupFinished"], 
   "main": "./out/extension.js",
   "contributes": {
