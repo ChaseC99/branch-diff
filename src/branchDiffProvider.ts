@@ -52,8 +52,8 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
 
     private async getFiles(): Promise<FileItem[]> {
         this.tree = {}
-        await execShell("cd " + this.workspaceRoot + "; pwd")
-        const files = await execShell("cd " + this.workspaceRoot + "; git diff main --name-only")
+        const branch = await this.getParentBranch()
+        const files = await execShell(`cd ${this.workspaceRoot}; git diff --name-only ${branch}`)
         files.split('\n')
             .filter(file => file !== '')
             .forEach(file => {
@@ -67,6 +67,15 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
             })
 
         return this.createChildren(this.tree, [])
+    }
+
+    private async getParentBranch(): Promise<string> {
+        const parentBranch = await execShell(
+            `cd ${this.workspaceRoot};` + 
+            ' git show-branch | sed "s/].*//" | grep "\\*" | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed "s/^.*\\[//"'
+        )
+
+        return parentBranch !== "" ? parentBranch : 'master'
     }
 
     private createChildren(treePosition: any, relativePath: string[]): FileItem[] {
