@@ -49,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
 			{placeHolder: "Select a branch", title: "Change Parent Branch to Compare"}
 		)
 		if (result && result.label.at(0) !== '*') {
-			branchDiffProvider.setBranch(result.label)
+			branchDiffProvider.setParentBranch(result.label)
 		}
 	})
 }

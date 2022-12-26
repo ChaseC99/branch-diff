@@ -10,6 +10,11 @@ import {
 
 import * as cp from "child_process";
 
+/**
+ * A helper function to run shell commands
+ * @param cmd the command to execute
+ * @returns the output of the shell command
+ */
 const execShell = (cmd: string) =>
     new Promise<string>((resolve, reject) => {
         cp.exec(cmd, (err, out) => {
@@ -29,16 +34,12 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
     constructor(private workspaceRoot: string | undefined) {
         this.tree = {}
 
-        this.parentBranch = "main"
+        this.parentBranch = ""
         this.getParentBranch().then(result => {
             this.parentBranch = result
             this.refresh()
         })
     }
-
-    refresh(): void {
-        this._onDidChangeTreeData.fire()
-	}
 
     getTreeItem(element: FileItem): FileItem | Thenable<FileItem> {
         return element;
@@ -46,21 +47,44 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
     
     getChildren(element?: any): ProviderResult<FileItem[]> {
         if (!element) {
-            return this.getFiles()
+            // Since there is no element, this is the start of the TreeDataProvider
+            // Generate the tree and return the list of children from the root
+            return this.constructTree().then(() => {
+                return this.createChildren(this.tree, [])
+            })
         } else {
             var treePosition = this.tree;
+
+            // Using the path, navigate to this elements position on the tree
             element.getRelativePath().forEach((dir: string) => {
                 treePosition = treePosition[dir]
             })
 
+            // Return the children of this tree position
             return this.createChildren(treePosition, element.getRelativePath())
         }
     }
 
+    /**
+     * Reloads the data and generates a new file tree
+     */
+    refresh(): void {
+        this._onDidChangeTreeData.fire()
+	}
+
+    /**
+     * Gets the parent branch
+     * @returns the parent branch
+     */
     public getBranch(): string {
         return this.parentBranch
     }
 
+    /**
+     * Get the local branches from git
+     * The current branch will be prepended with "* "
+     * @returns the list of local branches
+     */
     public async getBranches(): Promise<string[]> {
         const branches = await execShell(`cd ${this.workspaceRoot}; git branch`)
         return branches.split('\n')
@@ -70,33 +94,67 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
             })
     }
 
-    public setBranch(branch: string): void {
-        this.parentBranch = branch
+    /**
+     * Updates the parent branch and refreshes the data from the provider
+     * @param newParentBranch the desired parent branch
+     */
+    public setParentBranch(newParentBranch: string): void {
+        this.parentBranch = newParentBranch
         this.refresh()
     }
 
+    /**
+     * Calls getParentBranch() and updates the provider's parentBranch accordingly
+     * This will also trigger a refresh of the provider data
+     */
     public refreshParentBranch(): void {
         this.getParentBranch().then(parent => {
-            this.setBranch(parent)
+            this.setParentBranch(parent)
         })
     }
 
-    private async getFiles(): Promise<FileItem[]> {
-        this.tree = {}
+    /**
+     * Gets the files changed between the current branch and the parent branch
+     * using `git diff --name-only ${parentBranch}`
+     * @returns a list of changed files
+     */
+    private async getChangedFiles(): Promise<string[]> {
+        // Get the changed files by using `git diff`
         const files = await execShell(`cd ${this.workspaceRoot}; git diff --name-only ${this.parentBranch}`)
-        files.split('\n')
-            .filter(file => file !== '')
-            .forEach(file => {
-                var treePosition = this.tree;
-                file.split('/').forEach(dir => {
-                    if (!(dir in treePosition)) {
-                        treePosition[dir] = {}
-                    }
-                    treePosition = treePosition[dir]
-                })
-            })
 
-        return this.createChildren(this.tree, [])
+        // Split the files by newline and remove empty lines
+        return files.split('\n').filter(file => file !== '')            
+    }
+
+    /**
+     * Builds and saves a dict representing the file structure of the changed files
+     * This will update the BranchDiffProvider's tree attribute
+     */
+    private async constructTree(): Promise<void> {
+        // Reset the tree
+        this.tree = {}
+
+        // Get the changed files by using `git diff`
+        const files = await this.getChangedFiles()
+
+        // Construct the tree from the list of files
+        files.forEach(file => {
+            // Start at the top of the tree
+            var treePosition = this.tree;
+
+            // Split the file into its paths
+            // (e.g. src/docs/unit1 -> [src, docs, unit1])
+            // and walk down the tree, 
+            // adding newly discovered dirs as you go
+            file.split('/').forEach(dir => {
+                if (!(dir in treePosition)) {
+                    treePosition[dir] = {}
+                }
+
+                // Update the position to be the current dir
+                treePosition = treePosition[dir]
+            })
+        })
     }
 
     /**
@@ -169,6 +227,13 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
 }
 
 class FileItem extends TreeItem {
+    /**
+     * 
+     * @param root the workspace root
+     * @param relativePath a list of directories from the root to the file item
+     * @param collapsibleState 
+     * @param label the title of the item shown in the explorer view
+     */
     constructor(
         private root: string | undefined,
         public readonly relativePath: string[],
@@ -178,6 +243,8 @@ class FileItem extends TreeItem {
         super(Uri.file(root + "/" + relativePath.join('/')), collapsibleState);
 
         if (collapsibleState === TreeItemCollapsibleState.None) {
+            // Files will have a collapsible state of none
+            // Clicking on a file will open the file in vscode
             this.command = {
                 title: "",
                 command: "vscode.open",
