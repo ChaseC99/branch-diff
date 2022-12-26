@@ -18,6 +18,7 @@ If anything falls out of sync, there is also a manual refresh button.
 
 ### 1.1
 - Update parent branch automatically on branch change
+- Add compat folders
 - Add change log
 - Improve marketing material (README, screenshots, etc.)
 

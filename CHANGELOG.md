@@ -1,7 +1,8 @@
 # Change Log
 
-## [Unreleased]
+## [1.1.0]
 - Update parent branch automatically on git branch change
+- Add compact folders
 - Add change log
 - Improve marketing material (README, screenshots, etc.)
 
