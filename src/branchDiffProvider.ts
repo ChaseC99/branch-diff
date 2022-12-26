@@ -108,10 +108,58 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
         return parentBranch !== "" ? parentBranch.replace('\n','') : 'master'
     }
 
+    /**
+     * Generate a list of FileItems representing the children of the treePosition
+     * @param treePosition an object for a position in the tree that contains a dict of children
+     * @param relativePath a list of the directories from root to the treePosition
+     * @returns a list of FileItems representing the children of the given treePosition
+     */
     private createChildren(treePosition: any, relativePath: string[]): FileItem[] {
+        // For each child of the current treePosition, map it to a FileItem object 
         return Object.keys(treePosition).map(key => {
-            const collapsibleState = Object.keys(treePosition[key]).length === 0 ? TreeItemCollapsibleState.None : TreeItemCollapsibleState.Expanded
-            return new FileItem(this.workspaceRoot, relativePath.concat(key), collapsibleState)
+            var child = treePosition[key]
+
+            // The number of children that this child has
+            var numChildren = Object.keys(child).length 
+
+            if (numChildren != 1) {
+                // If there are 0 children, this item is a file and its collapsible state should be None
+                // If there are 2 or more children, this item is a folder and its collapsible state should be Expanded
+                const collapsibleState = numChildren == 0 ? TreeItemCollapsibleState.None : TreeItemCollapsibleState.Expanded
+                return new FileItem(this.workspaceRoot, relativePath.concat(key), collapsibleState)
+            }
+
+            // If there is only 1 child, this FileItem will be a compact folder
+            // (Single child folders will be compressed into a combined tree item)
+            // 
+            // This while-loop continues down the single child folders, 
+            // adding each to the compactPath, until it reaches the end (0 children) 
+            // or a folder with multiple children (2 or more)
+            const compactPath = [key]
+            while (numChildren == 1) {
+                // Get the only child's key
+                var childKey = Object.keys(child)[0]
+                
+                // Add the child's key to the path
+                compactPath.push(childKey)
+                
+                // Iterate to next child
+                var child = child[childKey]
+                numChildren = Object.keys(child).length
+            }
+
+            if (numChildren == 0) {
+                // The last item has no children, meaning it must be a file
+                // This should be a seperate FileItem on the tree, so we remove it from the compact path
+                // It will be dealt with later when `getChildren` is called on this FileItem
+                compactPath.pop()
+            } 
+
+            // Since this FileItem is a compact path of multiple folders,
+            // we need a custom label that contains all of the folders' names
+            // (e.g. src/docs/unit1)
+            const label = compactPath.join('/')
+            return new FileItem(this.workspaceRoot, relativePath.concat(compactPath), TreeItemCollapsibleState.Expanded, label)
         })
     } 
 }
@@ -121,6 +169,7 @@ class FileItem extends TreeItem {
         private root: string | undefined,
         public readonly relativePath: string[],
         public collapsibleState: TreeItemCollapsibleState,
+        public label?: string
     ) {
         super(Uri.file(root + "/" + relativePath.join('/')), collapsibleState);
 
@@ -131,9 +180,6 @@ class FileItem extends TreeItem {
                 arguments: [Uri.file(root + "/" + relativePath.join('/'))]
             }
         }
-        
-        // this.tooltip = `${this.label}-${this.version}`;
-        // this.description = "test";
     }
 
     public getRelativePath(): string[] {
