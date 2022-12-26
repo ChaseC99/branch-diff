@@ -99,13 +99,17 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
         return this.createChildren(this.tree, [])
     }
 
+    /**
+     * This function attempts to determine the parent branch through a series of bash commands
+     * @returns the parent branch or an empty string
+     */
     private async getParentBranch(): Promise<string> {
         const parentBranch = await execShell(
             `cd ${this.workspaceRoot};` + 
             ' git show-branch | sed "s/].*//" | grep "\\*" | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed "s/^.*\\[//"'
         )
 
-        return parentBranch !== "" ? parentBranch.replace('\n','') : 'master'
+        return parentBranch.replace('\n','')
     }
 
     /**
