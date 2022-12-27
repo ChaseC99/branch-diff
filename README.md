@@ -2,6 +2,10 @@
 
 An extension to show what files have changed compared to other branches.
 
+![Screenshot of Branch Diff](./screenshots/branch-diff.png)
+
+This extension is perfect for when you frequently switch between feature branches and want to see what files you were previously working in on that branch.
+
 ## Features
 
 - **Autodetect parent branch**  
@@ -14,11 +18,14 @@ By using the "Change Parent Branch" button, you can easily update which branch y
 The changed files should update automatically as you work. 
 If anything falls out of sync, there is also a manual refresh button.
 
+## Demo
+![Demo of Branch Diff](./screenshots/branch-diff.gif)
+
 ## Release Notes
 
 ### 1.1
 - Update parent branch automatically on branch change
-- Add compat folders
+- Add compact folders
 - Add change log
 - Improve marketing material (README, screenshots, etc.)
 
