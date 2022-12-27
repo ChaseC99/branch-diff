@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.1.1]
+- Update parent branch to always refer to the latest commit on the parent (no ~ or ^)
+
 ## [1.1.0]
 - Update parent branch automatically on git branch change
 - Add compact folders

@@ -167,7 +167,8 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
             ' git show-branch | sed "s/].*//" | grep "\\*" | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed "s/^.*\\[//"'
         )
 
-        return parentBranch.replace('\n','')
+        // Remove the newline and disregard anything after the ~ or ^
+        return parentBranch.replace('\n','').split('~')[0].split('^')[0]
     }
 
     /**

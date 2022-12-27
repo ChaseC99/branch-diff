@@ -3,7 +3,7 @@
   "displayName": "Branch Diff",
   "description": "Shows the files that have changed between branches",
   "publisher": "ChaseCarnaroli",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "engines": {
     "vscode": "^1.74.0"
   },
