@@ -8,28 +8,14 @@ import {
     Uri,
 } from 'vscode';
 
-import * as cp from "child_process";
-
-/**
- * A helper function to run shell commands
- * @param cmd the command to execute
- * @returns the output of the shell command
- */
-const execShell = (cmd: string) =>
-    new Promise<string>((resolve, reject) => {
-        cp.exec(cmd, (err, out) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve(out);
-        });
-    });
+import { simpleGit } from 'simple-git';
 
 export class BranchDiffProvider implements TreeDataProvider<FileItem> {
     private _onDidChangeTreeData: EventEmitter<FileItem | undefined | void> = new EventEmitter<FileItem | undefined | void>();
-	readonly onDidChangeTreeData: Event<FileItem | undefined | void> = this._onDidChangeTreeData.event;
+    readonly onDidChangeTreeData: Event<FileItem | undefined | void> = this._onDidChangeTreeData.event;
 
-    tree: {[key: string]: any };
+    git = simpleGit()
+    tree: { [key: string]: any };
     parentBranch: string;
     constructor(private workspaceRoot: string | undefined) {
         this.tree = {}
@@ -39,12 +25,14 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
             this.parentBranch = result
             this.refresh()
         })
+
+        this.git.init()
     }
 
     getTreeItem(element: FileItem): FileItem | Thenable<FileItem> {
         return element;
     }
-    
+
     getChildren(element?: any): ProviderResult<FileItem[]> {
         if (!element) {
             // Since there is no element, this is the start of the TreeDataProvider
@@ -70,7 +58,7 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
      */
     refresh(): void {
         this._onDidChangeTreeData.fire()
-	}
+    }
 
     /**
      * Gets the parent branch
@@ -86,12 +74,8 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
      * @returns the list of local branches
      */
     public async getBranches(): Promise<string[]> {
-        const branches = await execShell(`cd ${this.workspaceRoot}; git branch`)
-        return branches.split('\n')
-            .filter(branch => branch !== '')
-            .map(branch => {
-                return branch.replace('  ', '').replace('\n','')
-            })
+        const result = await this.git.branch()
+        return Object.keys(result.branches)
     }
 
     /**
@@ -120,10 +104,10 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
      */
     private async getChangedFiles(): Promise<string[]> {
         // Get the changed files by using `git diff`
-        const files = await execShell(`cd ${this.workspaceRoot}; git diff --name-only ${this.parentBranch}`)
+        const files = await this.git.diff(['--name-only', this.parentBranch])
 
         // Split the files by newline and remove empty lines
-        return files.split('\n').filter(file => file !== '')            
+        return files.split('\n').filter(file => file !== '')
     }
 
     /**
@@ -162,13 +146,20 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
      * @returns the parent branch or an empty string
      */
     private async getParentBranch(): Promise<string> {
-        const parentBranch = await execShell(
-            `cd ${this.workspaceRoot};` + 
-            ' git show-branch | sed "s/].*//" | grep "\\*" | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed "s/^.*\\[//"'
-        )
+        const currentBranch = await this.git.raw(['rev-parse', '--abbrev-ref', 'HEAD'])
+        const showBranch = await this.git.raw(['show-branch'])
+
+        const parentBranch = showBranch
+            .split('\n')                                    // Split the output by newline
+            .map(line => line.replace(/].*/, ''))           // Remove everything after the first ] (e.g. `[master] Commit message` -> `[master`)
+            .filter(line => line.includes('*'))             // Filter out any lines that don't contain a *
+            .filter(line => !line.includes(currentBranch))  // Filter out the current branch
+            .map(line => line.replace(/^.*\[/, ''))         // Remove everything before the first [ (e.g. `[master` -> `master`)
+            .shift();                                       // Get the first element
 
         // Remove the newline and disregard anything after the ~ or ^
-        return parentBranch.replace('\n','').split('~')[0].split('^')[0]
+        return parentBranch!.replace(/\n|[\n~^].*/g, '');
+
     }
 
     /**
@@ -183,7 +174,7 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
             var child = treePosition[key]
 
             // The number of children that this child has
-            var numChildren = Object.keys(child).length 
+            var numChildren = Object.keys(child).length
 
             if (numChildren != 1) {
                 // If there are 0 children, this item is a file and its collapsible state should be None
@@ -202,10 +193,10 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
             while (numChildren == 1) {
                 // Get the only child's key
                 var childKey = Object.keys(child)[0]
-                
+
                 // Add the child's key to the path
                 compactPath.push(childKey)
-                
+
                 // Iterate to next child
                 var child = child[childKey]
                 numChildren = Object.keys(child).length
@@ -216,7 +207,7 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
                 // This should be a seperate FileItem on the tree, so we remove it from the compact path
                 // It will be dealt with later when `getChildren` is called on this FileItem
                 compactPath.pop()
-            } 
+            }
 
             // Since this FileItem is a compact path of multiple folders,
             // we need a custom label that contains all of the folders' names
@@ -224,7 +215,7 @@ export class BranchDiffProvider implements TreeDataProvider<FileItem> {
             const label = compactPath.join('/')
             return new FileItem(this.workspaceRoot, relativePath.concat(compactPath), TreeItemCollapsibleState.Expanded, label)
         })
-    } 
+    }
 }
 
 class FileItem extends TreeItem {
